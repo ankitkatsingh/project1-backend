@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.inn.project1.project1.Project1ApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 21.573 s - in com.inn.project1.project1.Project1ApplicationTests
