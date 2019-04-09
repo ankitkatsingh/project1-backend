@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -75,11 +74,14 @@ public class StudentController {
 		return null;
 	}
 	
+	
 	@GetMapping("/api/exportStudnetList")
-	public String exportStudnetList() throws IOException, InvalidFormatException {
-		String destinationFilePath =  studentService.exportStudent();
+	public String exportStudnetList() throws IOException {
+		System.out.println("Entry hua kya");
+		String destinationFilePath =  studentService.exportStudentListWithMarks();
 		return "{\"destinationFilePath\":\""+destinationFilePath+"\"}";
 	}
+	
 	
 	@PostMapping("/api/createStudnetWithMarks")
 	public StudentWrapper createStudnetWithMarks(@RequestBody StudentWrapper studentWrapper) {

@@ -1,18 +1,22 @@
 package com.inn.project1.project1.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,7 @@ import com.inn.project1.project1.dao.IMarkDao;
 import com.inn.project1.project1.dao.IStudentDao;
 import com.inn.project1.project1.models.Marks;
 import com.inn.project1.project1.models.Student;
+import com.inn.project1.project1.utils.Project1Constants;
 import com.inn.project1.project1.utils.StudentWrapper;
 
 @Service
@@ -66,80 +71,6 @@ public class StudentService {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public String exportStudent() throws IOException, InvalidFormatException {
-		
-		File destinationFolder = new File("/home/ist/kavhale/project1/excelFiles/");
-		if(!destinationFolder.exists()) {
-			destinationFolder.mkdirs();
-		}
-		
-		XSSFWorkbook workbook = new XSSFWorkbook();
-		XSSFSheet sheet = workbook.createSheet("Students");
-		
-		CellStyle style = workbook.createCellStyle();
-		style.setFillBackgroundColor(IndexedColors.RED.getIndex());
-		style.setFillPattern(FillPatternType.BIG_SPOTS);
-		
-		Row headerRow = sheet.createRow(0);
-		
-		Cell idCell = headerRow.createCell(0);
-		idCell.setCellValue("Id");
-		idCell.setCellStyle(style);
-		
-		Cell nameCell = headerRow.createCell(1);
-		nameCell.setCellValue("Name");
-		nameCell.setCellStyle(style);
-		
-		Cell standardCell = headerRow.createCell(2);
-		standardCell.setCellValue("Standard");
-		standardCell.setCellStyle(style);
-		
-		Cell rollNoCell = headerRow.createCell(3);
-		rollNoCell.setCellValue("Roll No");
-		rollNoCell.setCellStyle(style);
-		
-		Cell genderCell = headerRow.createCell(4);
-		genderCell.setCellValue("Gender");
-		genderCell.setCellStyle(style);
-		
-		Iterable<Student> studnetsList = getAllStudents();
-		int rowIndex=1;
-		for(Student s : studnetsList) {
-			Row row = sheet.getRow(rowIndex);
-			if(row == null) {
-				row = sheet.createRow(rowIndex);
-			}
-			
-			int cellIndex = 0;
-			Cell idDataCell = row.createCell(cellIndex);
-			idDataCell.setCellValue(s.getId() != null ? s.getId().toString() : "");
-			cellIndex++;
-			
-			Cell nameDataCell = row.createCell(cellIndex);
-			nameDataCell.setCellValue(s.getName() != null ? s.getName() : "");
-			cellIndex++;
-			
-			Cell genderDataCell = row.createCell(cellIndex);
-			genderDataCell.setCellValue(s.getGender() != null ? s.getGender().toString() : "");
-			cellIndex++;
-			
-			Cell standardDataCell = row.createCell(cellIndex);
-			standardDataCell.setCellValue(s.getStandard() != null ? s.getStandard() : "");
-			cellIndex++;
-			
-			Cell rollNoDataCell = row.createCell(cellIndex);
-			rollNoDataCell.setCellValue(s.getRollNo() != null ? s.getRollNo().toString() : "" );
-		
-			rowIndex++;
-		}
-		
-		FileOutputStream fileOutputStream = new FileOutputStream(new File(destinationFolder,"studentList.xls"));
-		workbook.write(fileOutputStream);
-		fileOutputStream.close();
-		
-		return "/home/ist/kavhale/project1/excelFiles/studentList.xls";
 	}
 	
 	public StudentWrapper createStudnetWithMarks(StudentWrapper studentWrapper) {
@@ -209,6 +140,77 @@ public class StudentService {
 			return finalStudentIdentifier;
 		}catch(Exception e) {
 			
+		}
+		return null;
+	}
+	
+	public String exportStudentListWithMarks() {
+		try {
+			String fileName = "studentListExport.xlsx";
+			
+			String sourceFilePath = "/home/ist/Documents/tomcat_8/apache-tomcat-8.5.31/webapps/TimePass/importSamples/" + Project1Constants.STUDENT_EXPORT_SAMPLE_SHEET;
+			FileInputStream fileInputStream = new FileInputStream(new File(sourceFilePath));
+			XSSFWorkbook xssfWorkbook = new XSSFWorkbook(fileInputStream);
+			//SXSSFWorkbook sxssfWorkbook = new SXSSFWorkbook(xssfWorkbook);
+			//sxssfWorkbook.setCompressTempFiles(true);
+			//SXSSFSheet sheet = sxssfWorkbook.getSheetAt(0);
+			
+			XSSFSheet sheet = xssfWorkbook.getSheetAt(0);
+			List<Student> students = this.getAllStudents();
+			
+			if(CollectionUtils.isNotEmpty(students)) {
+				int rowIndex = 1;
+				for(Student s : students) {
+					Row row = sheet.getRow(rowIndex);
+					if(row == null) {
+						row = sheet.createRow(rowIndex);
+					}
+					int columnIndex = 0;
+					row.createCell(columnIndex++).setCellValue(s.getStudentIdentifier() != null ? s.getStudentIdentifier() : "");
+					row.createCell(columnIndex++).setCellValue(s.getName() != null ? s.getName() : "");
+					row.createCell(columnIndex++).setCellValue(s.getStandard() != null ? s.getStandard() : "");
+					row.createCell(columnIndex++).setCellValue(s.getRollNo() != null ? s.getRollNo().toString() : "");
+					row.createCell(columnIndex++).setCellValue(s.getGender() != null ? s.getGender().toString() : "");
+					
+					if(s.getMarks() != null) {
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getHindiMark() != null ? s.getMarks().getHindiMark().toString() : "");
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getEnglishMark() != null ? s.getMarks().getEnglishMark().toString() : "");
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getMathMark() != null ? s.getMarks().getMathMark().toString() : "");
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getScienceMark() != null ? s.getMarks().getScienceMark().toString() : "");
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getSocialScienceMark() != null ? s.getMarks().getSocialScienceMark().toString() : "");
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getTotalMark() != null ? s.getMarks().getTotalMark().toString() : "");
+						row.createCell(columnIndex++).setCellValue(s.getMarks().getPercentage() != null ? s.getMarks().getPercentage().toString() : "");
+					}else {
+						row.createCell(columnIndex++).setCellValue("");
+						row.createCell(columnIndex++).setCellValue("");
+						row.createCell(columnIndex++).setCellValue("");
+						row.createCell(columnIndex++).setCellValue("");
+						row.createCell(columnIndex++).setCellValue("");
+						row.createCell(columnIndex++).setCellValue("");
+						row.createCell(columnIndex++).setCellValue("");
+					}
+					
+					row.createCell(columnIndex++).setCellValue(s.getResult() != null ? s.getResult().toString() : "");
+					row.createCell(columnIndex++).setCellValue(s.getGrades() != null ? s.getGrades().toString() : "");
+					
+					rowIndex++;
+				}
+			}
+			
+			String destinationFileFolder = "/home/ist/kavhale/downloads/";
+			File destinationFile = new File(destinationFileFolder);
+			if(!destinationFile.exists()) {
+				destinationFile.mkdirs();
+			}
+			FileOutputStream fileOutputStream = new FileOutputStream(new File(destinationFileFolder + fileName));
+			xssfWorkbook.write(fileOutputStream);
+			fileInputStream.close();
+			fileInputStream.close();
+			
+			return destinationFileFolder + fileName;
+			
+		}catch(Exception e) {
+			e.printStackTrace();
 		}
 		return null;
 	}

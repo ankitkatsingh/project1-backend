@@ -2,6 +2,7 @@ package com.inn.project1.project1.models;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -54,7 +55,7 @@ public class Student implements Serializable{
 	@Enumerated(EnumType.STRING)
 	private Gender gender;
 	
-	@OneToOne()
+	@OneToOne(cascade=CascadeType.REMOVE)
 	@JoinColumn(name="studnet_mark_id")
 	private Marks marks;
 	
